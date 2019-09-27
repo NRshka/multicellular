@@ -42,4 +42,4 @@ class Muscle(Cell):
         '''
         Do moving according AI
         '''
-        return list(self.brain.action(vision))
+        return self.brain.action(vision)

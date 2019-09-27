@@ -1,5 +1,6 @@
 from torch import nn, flatten, tanh, FloatTensor
 from torch.optim import Adam
+from torch.nn import MSELoss
 
 
 Tensor = FloatTensor
@@ -26,8 +27,12 @@ class MovingBrain(nn.Module):
             nn.ReLU()
         )
         self.linear = nn.Linear(120*120, 2)#after conv_way we predict vector two coord
-        self.last_x = None
+
+        self.mse = MSELoss()
         self.optimizer = Adam(self.parameters(), 1e-5)
+
+        self.last_x = None
+        self.last_y = None
 
 
     def action(self, vision) -> tuple:
@@ -42,6 +47,7 @@ class MovingBrain(nn.Module):
         convoluted = self.conv_way(vision)
         flatten_conv = flatten(convoluted)
         self.last_y = tanh(self.linear(flatten_conv))
+        print(self.last_y)
 
         return self.last_y
 
@@ -55,7 +61,7 @@ class MovingBrain(nn.Module):
         @param another_moves_result resulting vector of another nn
         @return None
         '''
-        loss = nn.MSELoss(self.last_y, another_moves_result)
+        loss = self.mse(self.last_y, another_moves_result)
         
         self.optimizer.zero_grad()
         loss.backward()
