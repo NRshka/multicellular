@@ -1,5 +1,6 @@
+from typing import Optional
 from torch import nn, flatten, tanh, FloatTensor
-from torch import randn_like, rand_like
+from torch import randn_like, rand_like, rand
 from torch.optim import Adam
 
 
@@ -81,3 +82,41 @@ def mutate(weights, p, sigma):
         layer += (rand_like(layer) < p).float() * randn_like(layer) * sigma
 
 
+def crossingover(brain1, brain2, init_args: Optional[dict] = {}, p: float = 0.5):
+    '''
+    Crosses two specimens, creating a new one.
+
+    @param brain1
+    @param brain2
+    @param init_args: dict of args to create new specimen
+    @param p: probabily of getting param from first specimen
+
+    @return a new specimen
+    '''
+    assert isinstance(brain1, nn.Module), TypeError("First argument must provide nn.Module")
+    assert isinstance(brain2, nn.Module), TypeError("Second argument must provide nn.Module")
+    assert type(brain1) == type(brain2), TypeError("Types of specimens must be same.")
+    
+    new_speciment = type(brain1)(**init_args)
+
+    for layer, lb1, lb2 in zip(new_speciment.parameters(), brain1.parameters(), brain2.parameters()):
+        #Linear
+        if layer.size() == 2:
+            num_columns: int = layer.size()[1]
+            for line, l1, l2 in zip(layer, lb1, lb2):
+                for idx in range(num_columns):
+                    if rand(1) < p:
+                        line[idx] = l1[idx]
+                    else:
+                        line[idx] = l2[idx]
+        elif layer.size() == 4:
+            #Conv2d
+            for channel, ch1, ch2 in zip(layer, lb1, lb2):
+                for line, l1, l2 in zip(channel, ch1, ch2):
+                    for idx in range(num_columns):
+                        if rand(1) < p:
+                            line[idx] = l1[idx]
+                        else:
+                            line[idx] = l2[idx]
+
+    return new_speciment
