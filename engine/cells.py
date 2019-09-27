@@ -38,7 +38,8 @@ class Muscle(Cell):
         self.brain = MovingBrain()
 
 
-    def action(self):
+    def action(self, vision) -> list:
         '''
         Do moving according AI
         '''
+        return list(self.brain.action(vision))

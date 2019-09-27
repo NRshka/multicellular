@@ -1,5 +1,8 @@
-from torch import nn, flatten, tanh
+from torch import nn, flatten, tanh, FloatTensor
 from torch.optim import Adam
+
+
+Tensor = FloatTensor
 
 
 class CellDriver:
@@ -12,8 +15,8 @@ class CellDriver:
 
 class MovingBrain(nn.Module):
     def __init__(self):
-        super().__init__()
-        
+        super(MovingBrain, self).__init__()
+
         self.conv_way = nn.Sequential(
             nn.Conv2d(1, 3, 5),#1x128,x128
             nn.ReLU(),
@@ -33,6 +36,7 @@ class MovingBrain(nn.Module):
         @param vision: numpy array like image
         @return two-dimensonal vector of direction
         '''
+        vision = Tensor(vision)#.reshape((1, 1, 128, 128))
         self.last_x = vision
 
         convoluted = self.conv_way(vision)
