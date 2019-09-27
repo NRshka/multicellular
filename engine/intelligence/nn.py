@@ -1,6 +1,6 @@
 from torch import nn, flatten, tanh, FloatTensor
+from torch import randn_like, rand_like
 from torch.optim import Adam
-from torch.nn import MSELoss
 
 
 Tensor = FloatTensor
@@ -28,7 +28,7 @@ class MovingBrain(nn.Module):
         )
         self.linear = nn.Linear(120*120, 2)#after conv_way we predict vector two coord
 
-        self.mse = MSELoss()
+        self.mse = nn.MSELoss()
         self.optimizer = Adam(self.parameters(), 1e-5)
 
         self.last_x = None
@@ -66,3 +66,18 @@ class MovingBrain(nn.Module):
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
+
+
+def mutate(weights, p, sigma):
+    '''
+    Takes parameters of neural network and random mutate them
+    in normal distribution
+
+    @param weights: parameters of model in torch Tensor type
+    @param p: float, mutation probabily of each parameter
+    @sigm scale of mutation
+    '''
+    for layer in weights:
+        layer += (rand_like(layer) < p).float() * randn_like(layer) * sigma
+
+
