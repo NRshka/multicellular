@@ -21,6 +21,9 @@ def on_draw(delta_time):
         for cell, vec in zip(org.muscles, org.vectors):
             arcade.draw_circle_filled(cell.x, cell.y, 20, color)
             arcade.draw_line(cell.x, cell.y, cell.x+1000*vec[0], cell.y+1000*vec[1], arcade.color.SPANISH_VIOLET)
+            for neighbour in cell.links:
+                if neighbour != cell:
+                    arcade.draw_line(cell.x, cell.y, neighbour.x, neighbour.y, arcade.color.AZURE)
 
         #dx = sum([v[0] for v in org.vectors])
         #dy = sum([v[1] for v in org.vectors])
@@ -31,10 +34,10 @@ if __name__ == "__main__":
     moving_cells1 = [Muscle(150+30*cos(2*pi*i/4), 150+30*sin(2*pi*i/4)) for i in range(4)]
     moving_cells2 = [Muscle(450+50*cos(2*pi*i/3), 450+50*sin(2*pi*i/3)) for i in range(3)]
 
-    for cell1 in moving_cells1:
-        cell1.add_links(moving_cells1)
-    for cell2 in moving_cells2:
-        cell2.add_links(moving_cells2)
+    for ind, cell1 in enumerate(moving_cells1):
+        cell1.add_links(moving_cells1[:ind]+moving_cells1[ind+1:])
+    for ind, cell2 in enumerate(moving_cells2):
+        cell2.add_links(moving_cells2[:ind]+moving_cells2[ind+1:])
 
     org1 = Organism(moving_cells1)
     org2 = Organism(moving_cells2)
