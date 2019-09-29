@@ -1,5 +1,5 @@
 from typing import Optional
-from torch import nn, flatten, tanh, FloatTensor
+from torch import nn, flatten, tanh, sigmoid, FloatTensor
 from torch import randn_like, rand_like, rand
 from torch.optim import Adam
 
@@ -48,7 +48,7 @@ class MovingBrain(nn.Module):
         convoluted = self.conv_way(vision)
         flatten_conv = flatten(convoluted)
         self.last_y = tanh(self.linear(flatten_conv))
-        print(self.last_y)
+        #print(self.last_y)
 
         return self.last_y
 
@@ -67,6 +67,65 @@ class MovingBrain(nn.Module):
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
+
+
+
+class RangeAttackBrain(nn.Module):
+    def __init__(self, threshold=0.5):
+        assert threshold >= 0.0 and threshold <= 1.0
+
+        self.threshold = threshold
+
+        self.conv_way = nn.Sequential(
+            nn.Conv2d(1, 3, 5),#1x128,x128
+            nn.ReLU(),
+            nn.Conv2d(3, 3, 3),#3x124x124
+            nn.ReLU(),
+            nn.Conv2d(3, 1, 3),#3x122x122
+            nn.ReLU()
+        )
+        self.need_attack = nn.Linear(120*120, 1)#is it need to attack somewhere?
+        self.direction = nn.Linear(120*120, 2)#after conv_way we predict vector two coord
+
+        self.mse = nn.MSELoss()
+        self.optimizer = Adam(self.parameters(), 1e-5)
+
+        self.last_x = None
+        self.last_choice = None
+        self.last_direction = None
+
+
+    def action(self, vision) -> tuple:
+        '''
+        Gets the vision of cell and predicts the best direction to attack
+        @param vision: numpy array like image
+        @return two-dimensonal vector of direction
+        '''
+        vision = Tensor(vision)#.reshape((1, 1, 128, 128))
+        self.last_x = vision
+
+        convoluted = self.conv_way(vision)
+        flatten_conv = flatten(convoluted)
+        self.last_choice = sigmoid(self.need_attack(flatten_conv))
+
+        #if nnn select to attack it choosing direction else returns None
+        if self.last_choice.item() > self.threshold:
+            self.last_direction = tanh(self.linear(flatten_conv))
+            return None
+
+        return self.last_y
+
+
+    def backward(self, done_damage: float):
+        '''
+        The neural network strives to minimize 
+        the difference between its solution and 
+        the resulting vector of all other neural networks.
+        
+        @param another_moves_result resulting vector of another nn
+        @return None
+        '''
+        raise "Don't implemeted yet"
 
 
 def mutate(weights, p, sigma):

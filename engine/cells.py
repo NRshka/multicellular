@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from overrides import overrides
 
 
-from .intelligence.nn import MovingBrain
+from .intelligence.nn import MovingBrain, RangeAttackBrain
 
 
 @dataclass
@@ -28,6 +28,9 @@ class Cell:
                 self.links.append(cell)
 
 
+    def got_bitten(self, dmg):
+        self.hp -= dmg
+
 
 class Muscle(Cell):
     '''
@@ -40,6 +43,27 @@ class Muscle(Cell):
 
     def action(self, vision) -> list:
         '''
-        Do moving according AI
+        Does moving according AI
         '''
-        return self.brain.action(vision)
+        direction = self.brain.action(vision)
+        self.energy -= 1.*direction.mean()
+
+        return direction
+
+
+class Jaw(Cell):
+    def __init__(self, x, y, range, links: list = []):
+        super().__init__(hp=50., energy=100., links=links, x=x, y=y)
+        self.brain = RangeAttackBrain()
+        self.range = range
+
+
+    def action(self, vision) -> list:
+        '''
+        Does attack according AI
+        '''
+        direction = self.brain.action(vision)
+        if direction:
+            self.energy -= 2*direction.mean()
+
+        return self.range * direction
